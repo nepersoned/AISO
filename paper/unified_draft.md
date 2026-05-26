@@ -1,8 +1,8 @@
 # AISO: Asymmetric Interaction Swarm Optimization for Diversity-Aware Sub-graph Selection in Imbalanced Fraud Detection
 
-**Authors:** [Author], [Affiliation]  
-**Status:** Draft v1.0 (Unified)  
-**Target:** Memetic Computing (Springer, IF 3.4, SCIE) — fallback: MDPI Algorithms
+**Authors:** Jinhyung Bae, Hankuk University of Foreign Studies  
+**Status:** Draft v2.5  
+**Target:** Memetic Computing (Springer, IF 2.3, SCIE) — fallback: MDPI Algorithms
 
 ---
 
