@@ -420,14 +420,14 @@ Together, the synthetic and real-data evidence support complementary claims: (1)
 
 The Jaccard collapse (1.000 → 0.136 under asymmetric vs. symmetric $M$) confirms that cyclic preference structures — not radius constraints or explicit penalties — are the source of persistent specialization. All 15+ mechanism elaborations failed because they imposed *explicit* diversity control on a system that already achieves *implicit* diversity through asymmetric interaction; the productive complement is convergence assistance (phased refinement), not additional diversity pressure. The CEC-to-GNN transfer succeeds because discrete selection eliminates the type-spatial decoupling: agent type and selection action are the same variable, so type specialization directly produces diverse training coverage.
 
-### 7.4 Limitations
+### 7.2 Limitations
 
 1. **Governing condition dataset coverage.** The $\mathrm{CV}(\mu) < 1.0$ threshold is derived from three real datasets. Synthetic validation ($n = 135$, Section 6.5) confirms AISO robustness across CV regimes but shows the directional threshold is mediated by GNN-specific factors; wider real-dataset validation is required to establish the threshold's generality.
 2. **High-peak-count continuous niching.** F6 (18 peaks) and F7 (36 peaks) remain below CrowdingDE. Maintaining $\geq 18$ simultaneous niches with $N = 80$ agents exceeds AISO's current capacity; adaptive anchor initialization from detected modes is a natural extension.
 3. **Smart $M$ pre-processing dependency.** Cluster assignment quality is the binding constraint for Smart $M$ reliability (Appendix B.3). Mis-specified clusters misdirect the information gradient.
 4. **No theoretical non-collapse guarantee.** Empirical entropy measurements show sustained diversity under asymmetric $M$, but a rigorous proof of non-collapse under cyclic preference structures remains open.
 
-### 7.5 Future Work
+### 7.3 Future Work
 
 - **Fitness-informed anchor initialization**: Instead of random anchors (which created false attractors), initialize anchors from a preliminary scan of the landscape. This would address the single most impactful failure mode identified in the ablation.
 - **Learnable $M$**: A Hebbian rule $\Delta M \propto \Delta f \cdot W_i \otimes W_{j^\star}$ produced near-zero improvement (+0.001, $p = 0.25$) in isolation — but was tested under a fixed learning rate without adaptive scheduling. A curriculum-based approach with early exploration and late consolidation may be more effective.
