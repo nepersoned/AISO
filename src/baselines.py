@@ -132,12 +132,56 @@ class LIPS:
         return self.pos
 
 
+class RingPSO:
+    """
+    Ring-topology lbest PSO (Li 2010).
+    Each particle uses its own pbest and the best pbest in a
+    local ring neighborhood of size 2*nsize+1.
+    """
+    def __init__(self, n_particles, dim, bounds, nsize=2,
+                 w=0.7, c1=1.5, c2=1.5, seed=42):
+        self.n = n_particles; self.dim = dim; self.bounds = bounds
+        self.nsize = nsize
+        self.w, self.c1, self.c2 = w, c1, c2
+        self.rng = np.random.RandomState(seed)
+        self.pos = self.rng.uniform(bounds[0], bounds[1], (n_particles, dim))
+        self.vel = self.rng.uniform(-0.1, 0.1, (n_particles, dim))
+        self.pbest = self.pos.copy()
+        self.pbest_fit = None
+
+    def update(self, fn):
+        fits = fn(self.pos)
+        if self.pbest_fit is None:
+            self.pbest_fit = fits.copy()
+
+        imp = fits > self.pbest_fit
+        self.pbest[imp] = self.pos[imp]
+        self.pbest_fit[imp] = fits[imp]
+
+        for i in range(self.n):
+            # Ring neighborhood: i-nsize .. i .. i+nsize (wrap)
+            nbrs = [(i + d) % self.n for d in range(-self.nsize, self.nsize + 1)]
+            lbest = nbrs[int(np.argmax(self.pbest_fit[nbrs]))]
+
+            r1 = self.rng.rand(self.dim)
+            r2 = self.rng.rand(self.dim)
+            self.vel[i] = (self.w * self.vel[i]
+                           + self.c1 * r1 * (self.pbest[i] - self.pos[i])
+                           + self.c2 * r2 * (self.pbest[lbest] - self.pos[i]))
+            v_max = 0.2 * (self.bounds[1] - self.bounds[0])
+            self.vel[i] = np.clip(self.vel[i], -v_max, v_max)
+            self.pos[i] = np.clip(self.pos[i] + self.vel[i],
+                                  self.bounds[0], self.bounds[1])
+
+        return self.pos
+
+
 if __name__ == '__main__':
     def himmelblau(X):
         x, y = X[:, 0], X[:, 1]
         return 200 - (x**2+y-11)**2 - (x+y**2-7)**2
 
-    for cls in [SPSO, CrowdingDE, LIPS]:
+    for cls in [SPSO, CrowdingDE, LIPS, RingPSO]:
         algo = cls(50, 2, (-6, 6), seed=42)
         for _ in range(50): algo.update(himmelblau)
         pos = algo.pos if hasattr(algo, 'pos') else algo.pop

@@ -1,8 +1,8 @@
 # AISO: Asymmetric Interaction Swarm Optimization
 
-Multimodal optimization with bilinear asymmetric compatibility on simplex-valued type vectors.
+Population-based metaheuristic with asymmetric bilinear compatibility on simplex-valued type vectors, applied to diversity-aware sub-graph selection in imbalanced fraud detection.
 
-This repository accompanies the paper draft in [`paper/draft.md`](paper/draft.md).
+Paper draft: [`paper/unified_draft.md`](paper/unified_draft.md)
 
 ---
 
@@ -13,9 +13,7 @@ Inter-agent interaction is governed by an **asymmetric bilinear compatibility**:
 
 $$c_{ij} = W_i^\top M W_j \neq c_{ji}$$
 
-Agents move toward high-compatibility partners and assimilate their types upon successful moves.
-
-Compared to spatial niching (SPSO, NichePSO), AISO replaces the radius parameter with **type diversity** as the organizing principle.
+Because $c_{ij} \neq c_{ji}$, agents can have simultaneously divergent interests — type $k$ attracted to type $l$ while type $l$ is simultaneously repelled — producing persistent specialization without hard-coded spatial partitioning.
 
 ---
 
@@ -25,119 +23,88 @@ Compared to spatial niching (SPSO, NichePSO), AISO replaces the radius parameter
 aiso-paper/
 ├── README.md
 ├── requirements.txt
-├── src/                       # Core algorithm implementations
-│   ├── aiso_v3.py             # AISO with Type-Position Coupling
-│   ├── aiso_v4.py             # AISO + Coupling + Phased Refinement (final)
-│   ├── benchmarks.py          # CEC2013 niching benchmark subset
-│   └── baselines.py           # SPSO, CrowdingDE, LIPS
+├── src/                        # Core algorithm
+│   ├── aiso_v7.py              # Final AISO implementation
+│   ├── benchmarks.py           # CEC2013 niching benchmarks (F1–F8)
+│   └── baselines.py            # SPSO, CrowdingDE, PSO+LS
 ├── experiments/
-│   ├── run_main.py            # Main benchmark comparison (5 seeds)
-│   ├── visualize.py           # Generate paper figures
-│   └── diagnose.py            # Diagnostic for type-position decoupling
-├── results/
-│   ├── fig1_comparison.png    # Per-benchmark comparison bar chart
-│   ├── fig2_ablation.png      # AISO ablation study
-│   ├── fig3_ranking.png       # Overall ranking
-│   └── results_final.pkl      # Raw experimental results
+│   ├── run_main.py             # CEC2013 main benchmark
+│   ├── run_v7_ablation.py      # 15+ mechanism ablation
+│   ├── run_w4_pso_baseline.py  # PSO+LS memetic baseline
+│   ├── run_w14_pso_budget.py   # PSO+LS budget robustness
+│   ├── run_governing_condition_synthetic.py  # n=135 synthetic CV sweep
+│   └── run_w1_w5.py            # Sensitivity (γ, ρ)
+├── gnn/                        # GNN fraud detection experiments
+│   └── scripts/                # expA pipeline (Elliptic, Amazon, YelpChi)
+├── results/                    # Saved experimental results
 └── paper/
-    └── draft.md               # Full paper draft
-```
-
----
-
-## Quick Start
-
-### Requirements
-
-- Python 3.8+
-- numpy
-- matplotlib
-
-```bash
-pip install -r requirements.txt
-```
-
-### Reproduce Main Results
-
-```bash
-# Run full benchmark comparison (5 seeds, ~5 min on CPU)
-python experiments/run_main.py
-
-# Generate figures
-python experiments/visualize.py
-```
-
-### Run AISO on a Custom Problem
-
-```python
-from src.aiso_v4 import AISO_v4
-import numpy as np
-
-# Define your fitness function (vectorized over rows)
-def my_fitness(X):
-    return -np.sum(X**2, axis=1)  # maximize, so negate cost
-
-# Initialize AISO
-aiso = AISO_v4(
-    n_agents=80,
-    dim=2,
-    K=4,                # number of latent types
-    bounds=(-5, 5),
-    coupling=True,      # Type-Position Coupling (Innovation 1)
-    refinement=True,    # Phased Local Refinement (Innovation 2)
-    seed=42,
-)
-
-# Run
-final_positions = aiso.run(my_fitness, n_iter=200)
+    ├── unified_draft.md        # Full paper draft (v2.5, 540 lines)
+    ├── make_figures.py         # Figure generation script
+    └── figures/                # Generated figures (PDF + PNG)
 ```
 
 ---
 
 ## Main Results
 
-CEC2013 niching benchmark, accuracy threshold $\epsilon = 0.01$, 5 seeds:
+### CEC2013 Niching (F1–F8, 30 seeds, avg peak ratio)
 
-| Algorithm | Avg Peak Ratio |
-|---|---|
-| **AISO-v4 (ours)** | **0.800** |
-| CrowdingDE | 0.800 |
-| SPSO | 0.767 |
-| LIPS | 0.623 |
-| AISO baseline | 0.595 |
-
-**Ablation:**
-
-| Variant | Avg PR | $\Delta$ |
+| Method | Avg PR | vs AISO |
 |---|---|---|
-| AISO baseline | 0.595 | — |
-| + Type-Position Coupling | 0.545 | -0.050 |
-| + Phased Refinement (full) | **0.800** | +0.255 |
+| **AISO + Phased Refinement** | **0.911** | — |
+| Random + Refine | 0.906 | −0.005 (p=0.43, n.s.) |
+| PSO + LS (T=200) | 0.460 | −0.451 (p<0.0001) |
+| PSO + LS (T=400) | 0.427 | structural limit |
+| PSO + LS (T=800) | 0.416 | structural limit |
+| CrowdingDE | 0.952 | reference |
+| SPSO | 0.793 | reference |
 
-The two innovations are **complementary**: coupling alone disperses agents to distinct modes; refinement alone converges to too few modes. Both together achieve state-of-the-art.
+Asymmetric $M$ is the structural prerequisite: symmetric $M$ collapses all agents to identical solutions (Jaccard = 1.000 vs 0.136 under asymmetric).
+
+### Elliptic Bitcoin Fraud Detection (PR-AUC, 5 seeds)
+
+| Method | PR-AUC | Rank |
+|---|---|---|
+| **AISO (Smart→Smart)** | **0.6644 ± 0.020** | **1 / 18** |
+| mRMR → SGD | 0.6348 ± 0.006 | 2 |
+| Random baseline | ~0.553 | — |
+| Full graph (ceiling) | 0.7128 | — |
+
+Two-stage AISO recovers **93.2%** of full-graph performance under a 2% labeling budget.
+
+### Governing Condition
+
+$\mathrm{CV}(\mu) < 1.0$ perfectly rank-orders three real datasets by AISO outcome (Spearman $\rho = -1.0$). Synthetic validation across $n = 135$ conditions confirms AISO robustly outperforms random (mean $\Delta > 0$, $p < 0.0001$).
 
 ---
 
-## Algorithm Variants
+## Quick Start
 
-| Variant | Description |
-|---|---|
-| `AISO_v3` (coupling=False) | Base AISO from original framework |
-| `AISO_v3` (coupling=True) | + Type-Position Coupling |
-| `AISO_v4` | + Phased Local Refinement (final algorithm) |
+```bash
+pip install -r requirements.txt
+
+# CEC2013 ablation
+python experiments/run_v7_ablation.py
+
+# Generate paper figures
+python paper/make_figures.py
+
+# GNN fraud detection (requires Elliptic dataset)
+# See gnn/scripts/ for pipeline
+```
 
 ---
 
 ## Citation
 
-If you use this work, please cite:
-
 ```bibtex
-@misc{aiso2025,
-  title={AISO: Asymmetric Interaction Swarm Optimization with Type-Position Coupling for Multimodal Optimization},
-  author={[Author]},
-  year={2025},
-  note={Draft},
+@article{aiso2025,
+  title   = {{AISO}: Asymmetric Interaction Swarm Optimization for
+             Diversity-Aware Sub-graph Selection in Imbalanced Fraud Detection},
+  author  = {Bae, Jinhyung},
+  journal = {Memetic Computing},
+  year    = {2025},
+  note    = {Under review}
 }
 ```
 
@@ -145,10 +112,4 @@ If you use this work, please cite:
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## Acknowledgments
-
-This work builds on foundational niching research by Li (2010), Brits et al. (2007), and the broader swarm intelligence community.
+MIT — see [LICENSE](LICENSE).
