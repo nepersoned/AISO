@@ -105,7 +105,7 @@ To prevent premature convergence, negative entries of $M$ are scaled by swarm di
 
 $$M^{\mathrm{eff}}_{ij} = \begin{cases} M_{ij} \cdot (1 + 3\,e^{-\delta/0.12}) & M_{ij} < 0 \\ M_{ij} & M_{ij} \geq 0 \end{cases}$$
 
-When the swarm collapses spatially, repulsion intensifies; when dispersed, repulsion relaxes. This closes the feedback loop between type-space dynamics and position-space diversity.
+When the swarm collapses spatially, repulsion intensifies; when dispersed, repulsion relaxes. This closes the feedback loop between type-space dynamics and position-space diversity. Figure 1 illustrates the full per-iteration update cycle.
 
 ### 3.5 Smart M: Domain-Structured Compatibility
 
@@ -167,7 +167,7 @@ For the fraud detection application, AISO operates in two sequential stages. Alg
 
 ---
 
-This decomposition separates *what to look at* (stage 1) from *who to train on* (stage 2), enabling independent diversity pressure at both levels. The key design decision is that $M^{(2)}$ is reconstructed within $\mathcal{F}^*$ rather than the full feature space: cluster structure and MI rankings shift after feature projection, so recomputing Smart $M$ ensures the node-level information gradient reflects the filtered subspace.
+This decomposition separates *what to look at* (stage 1) from *who to train on* (stage 2), enabling independent diversity pressure at both levels. The key design decision is that $M^{(2)}$ is reconstructed within $\mathcal{F}^*$ rather than the full feature space: cluster structure and MI rankings shift after feature projection, so recomputing Smart $M$ ensures the node-level information gradient reflects the filtered subspace. Figure 2 illustrates the full pipeline.
 
 ---
 
@@ -188,7 +188,7 @@ We replace Smart $M$ with its symmetric counterpart $M_{\mathrm{sym}} = \frac{1}
 | Asymmetric (Smart $M$) | **0.136** | 0.027 |
 | Symmetric $M_\mathrm{sym}$ | **1.000** | 0.000 |
 
-Under symmetric $M$, all agents converge to identical feature masks (Jaccard = 1.000 across all 5 seeds). Under asymmetric $M$, agents maintain genuinely distinct specializations. This is the foundational mechanism evidence: asymmetry is necessary, not incidental.
+Under symmetric $M$, all agents converge to identical feature masks (Jaccard = 1.000 across all 5 seeds). Under asymmetric $M$, agents maintain genuinely distinct specializations. This is the foundational mechanism evidence: asymmetry is necessary, not incidental. Figure 5(a) visualizes the collapse.
 
 ### 4.2 Ablation of 15+ Candidate Mechanisms
 
@@ -216,7 +216,7 @@ Starting from the base AISO algorithm, we add 15 distinct mechanisms in isolatio
 | + Memetic local search | Mini-perturbation every 20 iters | 0.914 | $+0.003$ | 0.500 |
 | **+ Phased Refinement** | **Phase-2 Gaussian walk** | **0.911** | **+0.466** | **—** |
 
-No mechanism across M learning, W dynamics, or structural extensions achieves statistically significant improvement (all $p \geq 0.25$); phased refinement is the sole exception at +0.466. This is **scope identification**: the productive operating mode is the simplest possible form, and elaborations are redundant with dynamics already implicit in the base algorithm. Two isolation ablations confirm type-spatial decoupling: Random+Refine = 0.906 ($p=0.43$) and SymM+Refine = 0.896 ($p=0.21$) both trail AISO's 0.911 non-significantly — the global phase's contribution emerges only where type and selection are the same variable (Section 5). Hebbian M (+0.001, $p=0.25$) likewise fails to improve: Smart $M$'s prior-encoded statistics need not be re-discovered from noisy fitness signals.
+No mechanism across M learning, W dynamics, or structural extensions achieves statistically significant improvement (all $p \geq 0.25$); phased refinement is the sole exception at +0.466. Figure 3 summarizes the full ablation and method comparison. This is **scope identification**: the productive operating mode is the simplest possible form, and elaborations are redundant with dynamics already implicit in the base algorithm. Two isolation ablations confirm type-spatial decoupling: Random+Refine = 0.906 ($p=0.43$) and SymM+Refine = 0.896 ($p=0.21$) both trail AISO's 0.911 non-significantly — the global phase's contribution emerges only where type and selection are the same variable (Section 5). Hebbian M (+0.001, $p=0.25$) likewise fails to improve: Smart $M$'s prior-encoded statistics need not be re-discovered from noisy fitness signals.
 
 ### 4.3 Phased Refinement and Memetic Baseline
 
@@ -396,7 +396,7 @@ To extend beyond $n = 3$ real datasets, we ran a controlled synthetic experiment
 | Mean $\Delta$, $\mathrm{CV}(\mu) \geq 1.0$ | $+0.048$ ($n = 38$) |
 | Spearman $\rho(\mathrm{CV}, \Delta)$ | $+0.403$, $p < 0.0001$ |
 
-AISO outperforms the random baseline in all 135 synthetic conditions (mean $\Delta > 0$). Notably, the synthetic Spearman $\rho$ is **positive** (+0.403), contrasting with the real-data $\rho = -1.0$. In the synthetic setting, higher CV creates a clearer MI gradient, which AISO's optimization can exploit more effectively than a 50-sample random baseline. The real-world reversal (high CV → lower AISO advantage) is therefore not an intrinsic property of the MI-gradient mechanism, but is mediated by GNN-specific factors absent from the synthetic: class imbalance dynamics, graph propagation saturation (YelpChi), and co-occurring feature noise that corrupts the gradient when one cluster dominates.
+AISO outperforms the random baseline in all 135 synthetic conditions (mean $\Delta > 0$); see Figure 4. Notably, the synthetic Spearman $\rho$ is **positive** (+0.403), contrasting with the real-data $\rho = -1.0$. In the synthetic setting, higher CV creates a clearer MI gradient, which AISO's optimization can exploit more effectively than a 50-sample random baseline. The real-world reversal (high CV → lower AISO advantage) is therefore not an intrinsic property of the MI-gradient mechanism, but is mediated by GNN-specific factors absent from the synthetic: class imbalance dynamics, graph propagation saturation (YelpChi), and co-occurring feature noise that corrupts the gradient when one cluster dominates.
 
 Together, the synthetic and real-data evidence support complementary claims: (1) **AISO is robustly superior to random across the full CV spectrum** (synthetic, $n = 135$); (2) **the degree of real-world advantage is modulated by GNN environment quality**, with $\mathrm{CV}(\mu) < 1.0$ predicting favorable conditions (real data, $n = 3$). The governing condition is a deployment heuristic for the real setting, not a synthetic optimality bound.
 
