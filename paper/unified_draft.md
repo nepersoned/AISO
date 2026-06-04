@@ -28,11 +28,11 @@ AISO instantiates this principle through bilinear compatibility on probability-s
 
 1. **AISO framework**: A swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors, with type assimilation as the learning rule and adaptive repulsion as the diversity maintenance mechanism.
 
-2. **Mechanism validation with scope identification**: Systematic ablation of 15+ candidate mechanisms on CEC2013 F1–F8 identifies the productive operating mode of AISO and confirms that asymmetric $M$ is the structural prerequisite for diversity — not an incidental design choice.
+2. **Mechanism diagnostic with scope identification**: Systematic ablation of 15+ candidate mechanisms on CEC2013 F1–F8 identifies the productive operating mode of AISO and confirms that asymmetric $M$ is the structural prerequisite for diversity — not an incidental design choice. In continuous niching, the asymmetric mechanism is statistically indistinguishable from a random global phase; its contribution emerges in discrete selection (contribution 3).
 
-3. **Fraud detection application**: A two-stage Smart M pipeline achieves Rank 1 of 18 on Elliptic Bitcoin (PR-AUC 0.6644), demonstrating that the validated mechanism transfers from continuous niching to discrete graph selection.
+3. **Fraud detection application**: A two-stage Smart M pipeline achieves the highest PR-AUC among 18 compared methods on Elliptic Bitcoin (0.6644, 5 seeds), demonstrating that the mechanism transfers from continuous niching to discrete graph selection where type and position are the same variable.
 
-4. **Governing condition**: $\mathrm{CV}(\mu) < 1.0$ as a pre-deployment diagnostic that predicts AISO applicability from feature cluster statistics alone, before any training is run.
+4. **Preliminary governing condition**: $\mathrm{CV}(\mu) < 1.0$ as an observational heuristic ($n = 3$ real datasets) that associates feature cluster MI balance with favorable AISO outcomes; broader validation is required before prescriptive use.
 
 ---
 
@@ -356,7 +356,7 @@ The nonlinear-to-linear collapse span (0.6611 → 0.3175, −0.343) vastly excee
 
 ---
 
-## 6. Governing Condition
+## 6. Preliminary Governing Condition
 
 ### 6.1 Diversity Metric: $\mathrm{CV}(\mu)$
 
@@ -376,7 +376,7 @@ where $k$ is the number of feature clusters, $\mu_c = \mathbb{E}_{j \in \mathcal
 | Amazon | 9 | 1.601 | 9.8 | +0.020 |
 | YelpChi | 23 | 1.733 | 21.1 | $-0.014$ |
 
-Spearman $\rho$: $\mathrm{CV}(\mu) = -1.0$, $k = -0.5$, eff\_rank $= +0.5$. **$\mathrm{CV}(\mu)$ perfectly rank-orders all three datasets by AISO outcome.** Lower $\mathrm{CV}(\mu)$ means cluster-level mutual information is balanced across clusters — which is precisely the condition under which AISO's information gradient ($M_{ij} \propto \tilde{\mu}_j - \tilde{\mu}_i$) creates meaningful directional specialization. When $\mathrm{CV}(\mu)$ is high, one cluster dominates MI and the gradient degenerates toward a single direction, collapsing the multi-type dynamics.
+Spearman $\rho$: $\mathrm{CV}(\mu) = -1.0$, $k = -0.5$, eff\_rank $= +0.5$. $\mathrm{CV}(\mu)$ rank-orders all three datasets by AISO outcome ($n = 3$, observational). Lower $\mathrm{CV}(\mu)$ means cluster-level mutual information is balanced across clusters — which is precisely the condition under which AISO's information gradient ($M_{ij} \propto \tilde{\mu}_j - \tilde{\mu}_i$) creates meaningful directional specialization. When $\mathrm{CV}(\mu)$ is high, one cluster dominates MI and the gradient degenerates toward a single direction, collapsing the multi-type dynamics.
 
 We note that $n = 3$ precludes statistical significance testing of this real-dataset correlation; the directional finding is observational. Synthetic validation ($n = 135$, Section 6.5) provides broader statistical support for AISO's advantage and contextualizes the real-data threshold as a deployment heuristic mediated by GNN-environment factors.
 
@@ -392,7 +392,7 @@ Each failure type is diagnosable before running AISO: Amazon's dominant mode is 
 
 ### 6.4 Pre-Deployment Feasibility Assessment
 
-The governing condition converts deployment decisions into a three-minute pre-check: cluster features hierarchically, compute per-cluster MI, compute $\mathrm{CV}(\mu)$ — if below 1.0, AISO is applicable; otherwise, standard deterministic baselines (mRMR→SGD) are likely sufficient.
+As a preliminary heuristic ($n = 3$), $\mathrm{CV}(\mu)$ converts a deployment decision into a three-minute pre-check: cluster features hierarchically, compute per-cluster MI, compute $\mathrm{CV}(\mu)$ — if below 1.0, AISO is *more likely* to provide gains over random baselines; otherwise, deterministic baselines (mRMR→SGD) may be sufficient. This threshold requires wider validation before prescriptive use (Section 7.2).
 
 ### 6.5 Synthetic Validation: AISO Robustness Across $\mathrm{CV}(\mu)$ Regimes
 
