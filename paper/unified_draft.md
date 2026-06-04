@@ -21,7 +21,7 @@ Classical swarm methods fail here because their interaction topology is symmetri
 
 We argue that the root limitation is not radius tuning but the symmetry of interaction itself. When $c_{ij} = c_{ji}$, two agents cannot have simultaneously divergent interests — one cannot be attracted to a region while the other is repelled. Asymmetric interaction breaks this constraint: by setting $c_{ij} \neq c_{ji}$, the same matrix $M$ can encode directed relationships where type $k$ seeks type $l$'s information while type $l$ simultaneously repels type $k$'s spatial convergence. The result is **persistent specialization without hard-coded partitioning**.
 
-AISO instantiates this principle through bilinear compatibility on probability-simplex type vectors. Our investigation proceeds in three stages: (1) we establish which aspects of the AISO framework are structurally necessary versus incidental, through controlled ablation on standard niching benchmarks; (2) we demonstrate that the validated framework transfers to a high-value discrete selection problem — budget-constrained GNN training for fraud detection; (3) we characterize precisely when and why the transfer succeeds or fails.
+AISO instantiates this principle through bilinear compatibility on probability-simplex type vectors. Our investigation proceeds in three stages: (1) we establish which aspects of the AISO framework are structurally necessary versus incidental, through controlled ablation on standard niching benchmarks; (2) we demonstrate that the framework transfers to a high-value discrete selection problem — budget-constrained GNN training for fraud detection; (3) we characterize when the transfer succeeds or fails, and identify the conditions under which it does not.
 
 ### 1.1 Contributions
 
