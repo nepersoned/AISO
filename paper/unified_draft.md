@@ -8,7 +8,7 @@
 
 ## Abstract
 
-We present AISO (Asymmetric Interaction Swarm Optimization), a population-based metaheuristic in which agents interact through an asymmetric bilinear compatibility score $c_{ij} = W_i^\top M W_j \neq c_{ji}$, where each agent carries a probability-simplex type vector $W_i \in \Delta^{K-1}$ and $M \in \mathbb{R}^{K \times K}$ encodes directed affinities between agent types. We report three interconnected contributions. First, **mechanism validation across two regimes**: on CEC2013 niching benchmarks (F1–F8, 30 seeds), systematic ablation of 15+ candidate enhancements identifies phased local refinement as the sole productive complement (+0.466 average peak ratio); asymmetric $M$ is the necessary source of persistent diversity (Jaccard 1.000 under symmetric $M$, 0.136 under asymmetric); and a memetic baseline (PSO+Gaussian LS) collapses to 0.460 average peak ratio — less than half of AISO's 0.911 — confirming that diversity maintenance in the global phase is the critical property distinguishing effective memetic niching. Second, **application superiority**: on the Elliptic Bitcoin fraud graph, a two-stage AISO pipeline (stage 1: feature selection with domain-structured $M$; stage 2: fraud node selection) achieves PR-AUC 0.6644, ranking first among 18 competing methods and recovering 93.2\% of unconstrained full-graph performance (0.7128) under a 2\% labeling budget. Third, **a governing condition**: AISO's advantage is not universal but predictable — the coefficient of variation of per-cluster mutual information, $\mathrm{CV}(\mu) < 1.0$, perfectly rank-orders three real datasets by outcome (Spearman $\rho = -1.0$), enabling pre-deployment feasibility assessment. Synthetic validation across $n = 135$ conditions confirms that AISO consistently outperforms random baselines (mean $\Delta > 0$, $p < 0.0001$), while the directional threshold is shown to be mediated by GNN-specific factors in real deployments.
+We present AISO (Asymmetric Interaction Swarm Optimization), a population-based metaheuristic in which agents interact through an asymmetric bilinear compatibility score $c_{ij} = W_i^\top M W_j \neq c_{ji}$, where each agent carries a probability-simplex type vector $W_i \in \Delta^{K-1}$ and $M \in \mathbb{R}^{K \times K}$ encodes directed affinities between agent types. We report three interconnected contributions. First, **mechanism diagnostic across two regimes**: on CEC2013 niching benchmarks (F1–F8, 30 seeds), systematic ablation of 15+ candidate enhancements identifies phased local refinement as the sole productive complement (+0.466 average peak ratio); asymmetric $M$ is the necessary source of persistent diversity (Jaccard 1.000 under symmetric $M$, 0.136 under asymmetric); and a memetic baseline (PSO+Gaussian LS) collapses to 0.460 average peak ratio, confirming that diversity maintenance in the global phase is the critical property distinguishing effective memetic niching. Second, **application on fraud detection**: on the Elliptic Bitcoin fraud graph, a two-stage AISO pipeline (stage 1: feature selection with domain-structured $M$; stage 2: fraud node selection) achieves PR-AUC 0.6644, the highest among 18 compared methods, recovering 93.2\% of unconstrained full-graph performance (0.7128) under a constrained budget of 1,000 fraud labels (28.9\% of available fraud nodes).$^1$ Third, **a preliminary governing condition**: AISO's advantage is not universal but partially predictable — the coefficient of variation of per-cluster mutual information, $\mathrm{CV}(\mu)$, rank-orders three real datasets by outcome (Spearman $\rho = -1.0$, $n = 3$, observational); synthetic validation across $n = 135$ conditions separately confirms that AISO outperforms random baselines (mean $\Delta > 0$, $p < 0.0001$), though the directional relationship reverses in the synthetic setting (Section 6.5), indicating that the real-world threshold is mediated by GNN-specific deployment factors rather than the information-gradient mechanism alone.
 
 **Keywords:** multimodal optimization, niching, swarm intelligence, asymmetric interaction, bilinear compatibility, fraud detection, graph neural networks, diversity-aware sampling
 
@@ -175,7 +175,7 @@ This decomposition separates *what to look at* (stage 1) from *who to train on* 
 
 ---
 
-## 4. Mechanism Validation on CEC2013
+## 4. Mechanism Diagnostic on CEC2013
 
 We use CEC2013 niching benchmarks (F1–F8, [Li et al., 2013]) as a controlled laboratory to identify which components of the AISO framework are structurally necessary. The benchmarks span 1D and 2D landscapes with 1–36 global optima, providing a rich test of diversity preservation without confounding application-specific structure. All experiments use $N = 80$ agents, $T = 200$ iterations, accuracy threshold $\varepsilon = 0.01 \times \mathrm{range}$, and 30 random seeds.
 
@@ -285,7 +285,7 @@ Results are monotonically ordered: Sym→Sym < Sym→Smart < Smart→Sym < Smart
 
 We evaluate AISO across three benchmark fraud datasets in a progression of increasing integration.
 
-**Table 2. Stage-level PR-AUC across datasets.**
+**Table 3. Stage-level PR-AUC across datasets.**
 
 | Stage | Description | Elliptic | YelpChi | Amazon |
 |---|---|---|---|---|
@@ -300,7 +300,7 @@ On Elliptic, the full stage sequence recovers monotonically (0.3972 → 0.6348 �
 
 ### 5.4 Full Elliptic Ranking (18 Methods)
 
-**Table 3. Elliptic Bitcoin results, 18 methods, 5 seeds.**
+**Table 4. Elliptic Bitcoin results, 18 methods, 5 seeds.**
 
 | Rank | Method | Stage | PR-AUC | Std |
 |---|---|---|---|---|
@@ -318,15 +318,19 @@ Four of the top five methods are from the SC stage, confirming the two-stage str
 
 ### 5.5 Label Efficiency
 
-GraphSAGE trained on the full graph (no budget constraint) achieves PR-AUC 0.7128. Within a 2% labeling budget ($N_\mathrm{illicit} = 1000$ of 3,462 available):
+GraphSAGE trained on the full graph (no budget constraint) achieves PR-AUC 0.7128 (GCN at full graph: comparable). Within a constrained budget of $N_\mathrm{illicit} = 1{,}000$ fraud nodes (28.9% of the 3,462 available fraud labels),$^1$ AISO recovers:
 
-$$\frac{0.6644 - 0.5530}{0.7128 - 0.5530} = 70.0\%\ \text{of the gap to the unconstrained ceiling recovered}$$
+$$\frac{0.6644 - 0.5530}{0.7128 - 0.5530} = 70.0\%\ \text{of the gap to the unconstrained ceiling}$$
 
-Equivalently, AISO reaches 93.2% of full-graph performance (0.6644/0.7128) using only 2% of fraud labels. This is the deployment-side argument: constrained supervision is converted into near-ceiling performance, reducing human labeling cost by a factor of ~50.
+Equivalently, AISO reaches 93.2% of full-graph performance (0.6644/0.7128) under this label constraint.$^2$ This is the deployment-side argument: a fraction of available fraud supervision is converted into near-ceiling performance.
+
+$^1$ The ceiling (0.7128) uses GraphSAGE; AISO results use GCN. The comparison is conservative for AISO — GraphSAGE-AISO achieves 0.6611 (Table~5, Section~5.7), giving 92.8% recovery under a matched backbone.
+
+$^2$ Formal significance testing of AISO (0.6644 ± 0.020) vs. mRMR→SGD (0.6348 ± 0.006) is limited by the 5-seed budget; the gap (+0.030) exceeds the pooled standard error but a larger-seed replication is warranted.
 
 ### 5.6 Stage-2 Smart M Decomposition (2×2 Ablation)
 
-**Table 4. 2×2 stage M-configuration ablation on Elliptic.**
+**Table 5. 2×2 stage M-configuration ablation on Elliptic.**
 
 | | Stage-2 Rand M | Stage-2 Smart M | Stage-2 gain |
 |---|---|---|---|
@@ -364,7 +368,7 @@ where $k$ is the number of feature clusters, $\mu_c = \mathbb{E}_{j \in \mathcal
 
 ### 6.2 Three-Dataset Screening
 
-**Table 5. Diversity metrics vs. AISO outcome (SC PR-AUC $\Delta$ vs. S0 baseline).**
+**Table 6. Diversity metrics vs. AISO outcome (SC PR-AUC $\Delta$ vs. S0 baseline).**
 
 | Dataset | $k$ | $\mathrm{CV}(\mu)$ | eff\_rank | $\Delta$ SC |
 |---|---|---|---|---|
@@ -404,13 +408,11 @@ To extend beyond $n = 3$ real datasets, we ran a controlled synthetic experiment
 | Mean $\Delta$, $\mathrm{CV}(\mu) \geq 1.0$ | $+0.048$ ($n = 38$) |
 | Spearman $\rho(\mathrm{CV}, \Delta)$ | $+0.403$, $p < 0.0001$ |
 
-AISO outperforms the random baseline in all 135 synthetic conditions (mean $\Delta > 0$); see Figure 4. 
+AISO outperforms the random baseline in all 135 synthetic conditions (mean $\Delta > 0$); see Figure 4.
 
 ![Figure 4: Synthetic governing condition validation (n=135).](../results/governing_condition_synthetic.png)
 
-Notably, the synthetic Spearman $\rho$ is **positive** (+0.403), contrasting with the real-data $\rho = -1.0$. In the synthetic setting, higher CV creates a clearer MI gradient, which AISO's optimization can exploit more effectively than a 50-sample random baseline. The real-world reversal (high CV → lower AISO advantage) is therefore not an intrinsic property of the MI-gradient mechanism, but is mediated by GNN-specific factors absent from the synthetic: class imbalance dynamics, graph propagation saturation (YelpChi), and co-occurring feature noise that corrupts the gradient when one cluster dominates.
-
-Together, the synthetic and real-data evidence support complementary claims: (1) **AISO is robustly superior to random across the full CV spectrum** (synthetic, $n = 135$); (2) **the degree of real-world advantage is modulated by GNN environment quality**, with $\mathrm{CV}(\mu) < 1.0$ predicting favorable conditions (real data, $n = 3$). The governing condition is a deployment heuristic for the real setting, not a synthetic optimality bound.
+**Sign reversal caveat.** The synthetic Spearman $\rho(\mathrm{CV}, \Delta) = +0.403$ is in the *opposite direction* from the real-data $\rho = -1.0$. This is not a minor discrepancy — it means the synthetic proxy does not reproduce the directional relationship observed in real deployments. The most likely explanation is that the proxy omits GNN-specific environmental factors: class imbalance dynamics, graph propagation saturation (dominant in YelpChi), and feature-noise amplification under high CV — none of which are present in the synthetic fitness model. Consequently, the synthetic $n = 135$ result supports only the weaker claim that AISO is broadly superior to a random baseline; it does **not** validate the $\mathrm{CV}(\mu) < 1.0$ directional threshold. That threshold remains an observational heuristic derived from $n = 3$ real datasets and requires wider validation (Section 7.2).
 
 ---
 
@@ -422,10 +424,12 @@ The Jaccard collapse (1.000 → 0.136 under asymmetric vs. symmetric $M$) confir
 
 ### 7.2 Limitations
 
-1. **Governing condition dataset coverage.** The $\mathrm{CV}(\mu) < 1.0$ threshold is derived from three real datasets. Synthetic validation ($n = 135$, Section 6.5) confirms AISO robustness across CV regimes but shows the directional threshold is mediated by GNN-specific factors; wider real-dataset validation is required to establish the threshold's generality.
-2. **High-peak-count continuous niching.** F6 (18 peaks) and F7 (36 peaks) remain below CrowdingDE. Maintaining $\geq 18$ simultaneous niches with $N = 80$ agents exceeds AISO's current capacity; adaptive anchor initialization from detected modes is a natural extension.
-3. **Smart $M$ pre-processing dependency.** Cluster assignment quality is the binding constraint for Smart $M$ reliability (Appendix B.3). Mis-specified clusters misdirect the information gradient.
-4. **No theoretical non-collapse guarantee.** Empirical entropy measurements show sustained diversity under asymmetric $M$, but a rigorous proof of non-collapse under cyclic preference structures remains open.
+1. **Governing condition is preliminary ($n = 3$).** The $\mathrm{CV}(\mu) < 1.0$ threshold is an observational heuristic from three real datasets. The synthetic validation ($n = 135$) supports AISO's general superiority over random baselines but shows a sign-reversed directional relationship (Section 6.5), indicating the proxy does not capture the GNN-specific factors that drive the real-world threshold. Wider real-dataset validation is required before the threshold can be used prescriptively.
+2. **Headline comparison lacks formal significance.** The margin of AISO (0.6644 ± 0.020) over mRMR→SGD (0.6348 ± 0.006) on Elliptic is based on 5 seeds. A larger replication is needed for a definitive significance claim.
+3. **CEC continuous niching: asymmetric mechanism is statistically inert.** In the continuous setting (Section 4), AISO+Refine (0.911) is not statistically distinguishable from Random+Refine (0.906, $p = 0.43$) or SymM+Refine (0.896, $p = 0.21$). The mechanism's contribution to spatial niching performance is therefore zero in this regime; the gain over PSO+LS is attributable to diversity preservation generally, not asymmetric routing specifically. The mechanism's value emerges only in discrete selection (Section 5), where type and position are the same variable.
+4. **High-peak-count continuous niching.** F6 (18 peaks) and F7 (36 peaks) remain below CrowdingDE. Maintaining $\geq 18$ simultaneous niches with $N = 80$ agents exceeds AISO's current capacity.
+5. **Smart $M$ pre-processing dependency.** Cluster assignment quality is the binding constraint for Smart $M$ reliability (Appendix B.3). Mis-specified clusters misdirect the information gradient.
+6. **No theoretical non-collapse guarantee.** Empirical entropy measurements show sustained diversity under asymmetric $M$, but a rigorous proof of non-collapse under cyclic preference structures remains open.
 
 ### 7.3 Future Work
 
@@ -440,11 +444,11 @@ The Jaccard collapse (1.000 → 0.136 under asymmetric vs. symmetric $M$) confir
 
 We presented AISO, a swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors. Our investigation makes three validated contributions.
 
-**First, mechanism validation with scope identification.** On CEC2013 F1–F8 (30 seeds), systematic ablation of 15+ candidate enhancements confirms that (1) asymmetric $M$ is the structural prerequisite for diversity persistence — symmetrizing $M$ collapses all agents to identical solutions (Jaccard 1.000); (2) phased local refinement is the sole productive complement, contributing +0.466 average peak ratio; and (3) all mechanism elaborations — type-position coupling, adaptive anchors, Hebbian M learning, W penalties, niche detection — fall within noise of the refine-only baseline ($p \geq 0.25$). This identifies the framework's operating mode rather than cataloguing failures.
+**First, mechanism diagnostic with scope identification.** On CEC2013 F1–F8 (30 seeds), systematic ablation of 15+ candidate enhancements confirms that (1) asymmetric $M$ is the structural prerequisite for diversity persistence — symmetrizing $M$ collapses all agents to identical solutions (Jaccard 1.000); (2) phased local refinement is the sole productive complement (+0.466 average peak ratio); and (3) in continuous niching, the asymmetric mechanism is statistically indistinguishable from a random global phase ($p = 0.43$), establishing that its value is domain-specific to discrete selection. This is scope identification, not a failure.
 
-**Second, application superiority.** On Elliptic Bitcoin, the two-stage pipeline achieves PR-AUC 0.6644 (Rank 1 of 18), recovering 93.2% of full-graph performance under a 2% labeling budget, and confirmed by the asymmetry ablation (Jaccard 1.000 → 0.136, PR-AUC 0.5527 → 0.6644) and monotone 2×2 stage decomposition.
+**Second, application on fraud detection.** On Elliptic Bitcoin, the two-stage pipeline achieves PR-AUC 0.6644 (highest among 18 compared methods, 5 seeds), recovering 93.2% of full-graph performance under a constrained label budget, confirmed by the asymmetry ablation (Jaccard 1.000 → 0.136, PR-AUC 0.5527 → 0.6644) and monotone 2×2 stage decomposition. Formal significance of the margin over mRMR→SGD (+0.030) is limited by seed count.
 
-**Third, a governing condition.** $\mathrm{CV}(\mu) < 1.0$ perfectly rank-orders three real datasets by outcome (Spearman $\rho = -1.0$); synthetic validation ($n = 135$, $p < 0.0001$) confirms AISO robustly outperforms random across all CV regimes, with the real-world directional threshold reflecting GNN-environment modulation rather than a mechanism bound.
+**Third, a preliminary governing condition.** $\mathrm{CV}(\mu)$ rank-orders three real datasets by outcome (Spearman $\rho = -1.0$, $n = 3$, observational); synthetic validation ($n = 135$, $p < 0.0001$) confirms AISO outperforms random broadly, but the directional relationship reverses in the synthetic setting, indicating the real-world threshold is mediated by GNN-environment factors and requires wider validation.
 
 The unified message: asymmetric bilinear interaction is a structurally motivated diversity mechanism whose effective operating regime is established by controlled ablation, and whose transfer to structured selection problems is validated and conditionally bounded — enabling practitioners to assess applicability before deployment.
 
