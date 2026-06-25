@@ -1,13 +1,13 @@
 # AISO: Asymmetric Interaction Swarm Optimization for Diversity-Aware Sub-graph Selection in Imbalanced Fraud Detection
 
 **Authors:** Jinhyung Bae, Hankuk University of Foreign Studies  
-**Status:** Draft v2.5
+**Status:** Draft v3.0
 
 ---
 
 ## Abstract
 
-We present AISO (Asymmetric Interaction Swarm Optimization), a population-based metaheuristic in which agents interact through an asymmetric bilinear compatibility score $c_{ij} = W_i^\top M W_j \neq c_{ji}$, where each agent carries a probability-simplex type vector $W_i \in \Delta^{K-1}$ and $M \in \mathbb{R}^{K \times K}$ encodes directed affinities between agent types. We report three interconnected contributions. First, **mechanism diagnostic across two regimes**: on CEC2013 niching benchmarks (F1–F8, 30 seeds), systematic ablation of 15+ candidate enhancements identifies phased local refinement as the sole productive complement (+0.466 average peak ratio); asymmetric $M$ is the necessary source of persistent diversity (Jaccard 1.000 under symmetric $M$, 0.136 under asymmetric); and a memetic baseline (PSO+Gaussian LS) collapses to 0.460 average peak ratio, confirming that diversity maintenance in the global phase is the critical property distinguishing effective memetic niching. Second, **application on fraud detection**: on the Elliptic Bitcoin fraud graph, a two-stage AISO pipeline (stage 1: feature selection with domain-structured $M$; stage 2: fraud node selection) achieves PR-AUC 0.6644, the highest among 18 compared methods, recovering 93.2\% of unconstrained full-graph performance (0.7128) under a constrained budget of 1,000 fraud labels (28.9\% of available fraud nodes).$^1$ Third, **a preliminary governing condition**: AISO's advantage is not universal but partially predictable — the coefficient of variation of per-cluster mutual information, $\mathrm{CV}(\mu)$, rank-orders three real datasets by outcome (Spearman $\rho = -1.0$, $n = 3$, observational); synthetic validation across $n = 135$ conditions separately confirms that AISO outperforms random baselines (mean $\Delta > 0$, $p < 0.0001$), though the directional relationship reverses in the synthetic setting (Section 6.5), indicating that the real-world threshold is mediated by GNN-specific deployment factors rather than the information-gradient mechanism alone.
+We propose AISO (Asymmetric Interaction Swarm Optimization), a population-based metaheuristic in which agents interact through an asymmetric bilinear compatibility score $c_{ij} = W_i^\top M W_j \neq c_{ji}$, where each agent carries a probability-simplex type vector $W_i \in \Delta^{K-1}$ and $M \in \mathbb{R}^{K \times K}$ encodes directed affinities between agent types. On the Elliptic Bitcoin fraud graph, a two-stage AISO pipeline achieves PR-AUC 0.6644, the highest among 18 compared methods, recovering 93.2\% of unconstrained full-graph performance (0.7128) under a constrained budget of 1,000 fraud labels. We present four contributions. First, **the AISO algorithm**: asymmetric bilinear compatibility on simplex-valued type vectors, with type assimilation as the update rule and adaptive repulsion as the diversity maintenance mechanism. Second, **component analysis**: systematic ablation on CEC2013 niching benchmarks (F1–F8, 30 seeds) identifies phased local refinement as the productive complement (+0.466 average peak ratio) and confirms that asymmetric $M$ is the structural prerequisite for diversity in discrete selection (Jaccard 0.136 vs. 1.000 under symmetric $M$); in continuous niching, the asymmetric mechanism operates equivalently to a random global phase, which we analyze as a regime boundary rather than a failure. Third, **an empirical applicability heuristic**: the coefficient of variation of per-cluster mutual information, $\mathrm{CV}(\mu)$, associates feature cluster MI balance with favorable AISO outcomes across $n = 3$ real datasets (Spearman $\rho = -1.0$, observational); this is reported as a practical heuristic, not a predictive law.
 
 **Keywords:** multimodal optimization, niching, swarm intelligence, asymmetric interaction, bilinear compatibility, fraud detection, graph neural networks, diversity-aware sampling
 
@@ -19,19 +19,19 @@ Many real-world optimization and selection problems require simultaneously disco
 
 Classical swarm methods fail here because their interaction topology is symmetric: every agent is attracted toward high-fitness regions, creating homogenization pressure that collapses the population to a single attractor. Niching methods such as SPSO [Li, 2004] impose spatial radius constraints to partition the swarm, but this requires prior knowledge of peak spacing and scales poorly to high-dimensional or heterogeneous landscapes.
 
-We argue that the root limitation is not radius tuning but the symmetry of interaction itself. When $c_{ij} = c_{ji}$, two agents cannot have simultaneously divergent interests — one cannot be attracted to a region while the other is repelled. Asymmetric interaction breaks this constraint: by setting $c_{ij} \neq c_{ji}$, the same matrix $M$ can encode directed relationships where type $k$ seeks type $l$'s information while type $l$ simultaneously repels type $k$'s spatial convergence. The result is **persistent specialization without hard-coded partitioning**.
+We address this by replacing symmetric attraction with asymmetric bilinear compatibility. When $c_{ij} = c_{ji}$, two agents cannot have simultaneously divergent interests. Setting $c_{ij} \neq c_{ji}$ via a learned matrix $M$ allows type $k$ to seek type $l$'s information while type $l$ simultaneously repels type $k$, producing persistent specialization without hard-coded partitioning.
 
-AISO instantiates this principle through bilinear compatibility on probability-simplex type vectors. Our investigation proceeds in three stages: (1) we establish which aspects of the AISO framework are structurally necessary versus incidental, through controlled ablation on standard niching benchmarks; (2) we demonstrate that the framework transfers to a high-value discrete selection problem — budget-constrained GNN training for fraud detection; (3) we characterize when the transfer succeeds or fails, and identify the conditions under which it does not.
+AISO instantiates this design through bilinear compatibility on probability-simplex type vectors. This paper presents the algorithm, analyzes its components through ablation on standard niching benchmarks, demonstrates its application to budget-constrained GNN training for fraud detection, and characterizes the conditions under which the approach is effective.
 
 ### 1.1 Contributions
 
-1. **AISO framework**: A swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors, with type assimilation as the learning rule and adaptive repulsion as the diversity maintenance mechanism.
+1. **AISO algorithm**: A swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors, with type assimilation as the update rule, adaptive repulsion as the diversity maintenance mechanism, and a phased global–local schedule.
 
-2. **Mechanism diagnostic with scope identification**: Systematic ablation of 15+ candidate mechanisms on CEC2013 F1–F8 identifies the productive operating mode of AISO and confirms that asymmetric $M$ is the structural prerequisite for diversity — not an incidental design choice. In continuous niching, the asymmetric mechanism is statistically indistinguishable from a random global phase; its contribution emerges in discrete selection (contribution 3).
+2. **Component analysis**: Systematic ablation of 15+ candidate mechanisms on CEC2013 F1–F8 (30 seeds) isolates phased local refinement as the sole productive complement (+0.466 average peak ratio) and confirms that asymmetric $M$ is the structural prerequisite for diversity in discrete selection (Jaccard 0.136 vs. 1.000). The analysis further identifies a regime boundary: in continuous niching, the asymmetric mechanism is equivalent to a random global phase, limiting the algorithm's applicability to settings where type and position are coupled.
 
-3. **Fraud detection application**: A two-stage Smart M pipeline achieves the highest PR-AUC among 18 compared methods on Elliptic Bitcoin (0.6644, 5 seeds), demonstrating that the mechanism transfers from continuous niching to discrete graph selection where type and position are the same variable.
+3. **Fraud detection performance**: A two-stage Smart M pipeline achieves PR-AUC 0.6644 on Elliptic Bitcoin (rank 1 of 18 methods, 5 seeds), recovering 93.2\% of unconstrained performance under a 1,000-label budget.
 
-4. **Preliminary governing condition**: $\mathrm{CV}(\mu) < 1.0$ as an observational heuristic ($n = 3$ real datasets) that associates feature cluster MI balance with favorable AISO outcomes; broader validation is required before prescriptive use.
+4. **Empirical applicability heuristic**: $\mathrm{CV}(\mu)$ rank-orders three real datasets by AISO outcome (Spearman $\rho = -1.0$, $n = 3$, observational). Reported as a practical screening heuristic; broader validation is required before prescriptive use.
 
 ---
 
@@ -51,7 +51,7 @@ CARE-GNN [Dou et al., 2020] addresses camouflage via neighbor-evidence masking. 
 
 ### 2.4 Asymmetric Interaction
 
-Asymmetric affinity matrices appear in opinion dynamics [Caldarelli et al., 2007], game-theoretic swarm robotics [Liu et al., 2025], and replicator dynamics, but to our knowledge no prior swarm optimizer employs a learnable bilinear asymmetric compatibility on simplex-valued types. The closest analogs in population dynamics are Lotka-Volterra systems with asymmetric interaction terms, which also generate persistent coexistence through directed competitive relationships.
+Asymmetric affinity matrices appear in opinion dynamics [Bagnoli et al., 2007] and replicator dynamics, and asymmetric payoff structures are central to evolutionary game theory, but to our knowledge no prior swarm optimizer employs a learnable bilinear asymmetric compatibility on simplex-valued types. The closest analogs in population dynamics are Lotka-Volterra systems with asymmetric interaction terms, which also generate persistent coexistence through directed competitive relationships.
 
 ### 2.5 Memetic Algorithms
 
@@ -174,15 +174,13 @@ This decomposition separates *what to look at* (stage 1) from *who to train on* 
 
 ---
 
-## 4. Mechanism Diagnostic on CEC2013
+## 4. Component Analysis on CEC2013
 
-We use CEC2013 niching benchmarks (F1–F8, [Li et al., 2013]) as a controlled laboratory to identify which components of the AISO framework are structurally necessary. The benchmarks span 1D and 2D landscapes with 1–36 global optima, providing a rich test of diversity preservation without confounding application-specific structure. All experiments use $N = 80$ agents, $T = 200$ iterations, accuracy threshold $\varepsilon = 0.01 \times \mathrm{range}$, and 30 random seeds.
+We use CEC2013 niching benchmarks (F1–F8, [Li et al., 2013]) as a controlled testbed to analyze which components of AISO contribute to performance. The benchmarks span 1D and 2D landscapes with 1–36 global optima, providing a rich test of diversity preservation without confounding application-specific structure. All experiments use $N = 80$ agents, $T = 200$ iterations, accuracy threshold $\varepsilon = 0.01 \times \mathrm{range}$, and 30 random seeds.
 
-**Unifying framing.** AISO's global phase operates in *type space* — agents specialize into distinct compatibility profiles via asymmetric interaction. In CEC continuous niching, type and position are independent variables: an agent can hold a highly differentiated type vector while its spatial position still converges toward the same attractor as other agents. This *type-spatial decoupling* means that type-space diversity does not automatically produce spatial basin coverage. The experiments in this section explicitly diagnose this decoupling — identifying which mechanisms matter for spatial niching performance and which do not — and thereby predict the mechanism's success in Section 5, where the decoupling disappears because agent type and selection action are the same variable.
+**Unifying framing.** AISO's global phase operates in *type space* — agents specialize into distinct compatibility profiles via asymmetric interaction. In CEC continuous niching, type and position are independent variables: an agent can hold a highly differentiated type vector while its spatial position still converges toward the same attractor as other agents. This *type-spatial decoupling* means that type-space diversity does not automatically produce spatial basin coverage. The experiments in this section analyze this decoupling — identifying which mechanisms contribute to spatial niching performance and which do not — and thereby anticipate the mechanism's role in Section 5, where the decoupling disappears because agent type and selection action are the same variable.
 
-### 4.1 Necessity of Asymmetric $M$
-
-**Claim**: asymmetric $M$ is the structural prerequisite for persistent sub-population diversity; symmetrizing $M$ causes swarm collapse.
+### 4.1 Role of Asymmetric $M$
 
 We replace Smart $M$ with its symmetric counterpart $M_{\mathrm{sym}} = \frac{1}{2}(|M| + |M|^\top)$ and run identical AISO loops on Elliptic. Inter-agent feature mask overlap (Jaccard similarity) collapses completely:
 
@@ -191,7 +189,7 @@ We replace Smart $M$ with its symmetric counterpart $M_{\mathrm{sym}} = \frac{1}
 | Asymmetric (Smart $M$) | **0.136** | 0.027 |
 | Symmetric $M_\mathrm{sym}$ | **1.000** | 0.000 |
 
-Under symmetric $M$, all agents converge to identical feature masks (Jaccard = 1.000 across all 5 seeds). Under asymmetric $M$, agents maintain genuinely distinct specializations. This is the foundational mechanism evidence: asymmetry is necessary, not incidental. Figure 5(a) visualizes the collapse.
+Under symmetric $M$, all agents converge to identical feature masks (Jaccard = 1.000 across all 5 seeds). Under asymmetric $M$, agents maintain genuinely distinct specializations. In the discrete selection setting (Elliptic), asymmetric $M$ is the structural prerequisite for diversity — symmetrizing it causes complete collapse. Figure 5(a) visualizes this collapse. Note that this finding applies in the discrete application domain; in continuous niching (Section 4.3), the mechanism's contribution to spatial diversity is not statistically distinguishable from a random global phase.
 
 ![Figure 5: (a) Diversity collapse under symmetric M. (b) 2×2 stage decomposition.](figures/fig5_jaccard_diversity.png)
 
@@ -267,9 +265,9 @@ Given a fraud graph $G = (V, E)$ with node features $X \in \mathbb{R}^{|V| \time
 
 **Protocol:** 2-layer GCN (hidden=64, dropout=0.5, Adam lr=0.01, early stopping patience=15), 5 seeds $\{0, 7, 42, 77, 123\}$, mean $\pm$ std PR-AUC reported. Budget: $N_\mathrm{illicit} = 1000$, $N_\mathrm{licit} = 10000$ on Elliptic (3,462 available fraud nodes).
 
-### 5.2 Asymmetry Necessity in the Application Domain
+### 5.2 Role of Asymmetric $M$ in the Application Domain
 
-Replicating the mechanism validation from Section 4.1 in the application context confirms that the structural finding generalizes:
+Replicating the asymmetry ablation from Section 4.1 in the application context confirms that the asymmetry effect holds in the discrete setting:
 
 | Stage | Config | PR-AUC | Jaccard |
 |---|---|---|---|
@@ -325,7 +323,7 @@ Equivalently, AISO reaches 93.2% of full-graph performance (0.6644/0.7128) under
 
 $^1$ The ceiling (0.7128) uses GraphSAGE; AISO results use GCN. The comparison is conservative for AISO — GraphSAGE-AISO achieves 0.6611 (Table~5, Section~5.7), giving 92.8% recovery under a matched backbone.
 
-$^2$ Formal significance testing of AISO (0.6644 ± 0.020) vs. mRMR→SGD (0.6348 ± 0.006) is limited by the 5-seed budget; the gap (+0.030) exceeds the pooled standard error but a larger-seed replication is warranted.
+$^2$ Paired bootstrap (10,000 resamples): 95% CI [+0.011, +0.046], excluding zero. Paired $t$-test: $p = 0.046$; Wilcoxon signed-rank: $p = 0.125$ (not significant). The three tests diverge because $n = 5$ and one seed (77) yields a negative difference ($-0.006$); the direction is consistent across 4 of 5 seeds. A larger replication is needed for a robust significance claim.
 
 ### 5.6 Stage-2 Smart M Decomposition (2×2 Ablation)
 
@@ -387,7 +385,7 @@ We note that $n = 3$ precludes statistical significance testing of this real-dat
 | **Amazon** | 1.601 | Dominant mode collapse | SA below random ($-0.063$); SC below SB ($-0.020$) |
 | **YelpChi** | 1.733 | GCN propagation saturation | 18-method range = 0.037; all stages near-flat |
 
-Each failure type is diagnosable before running AISO: Amazon's dominant mode is visible in its MI distribution; YelpChi's graph saturation is visible in the homophily coefficient. The threshold $\mathrm{CV}(\mu) < 1.0$ separates success (0.667) from failure (1.601, 1.733).
+Each failure type is diagnosable before running AISO: Amazon's dominant mode is visible in its MI distribution; YelpChi's graph saturation is visible in the homophily coefficient. The threshold $\mathrm{CV}(\mu) < 1.0$ is associated with success (0.667) versus failure (1.601, 1.733) across these three datasets.
 
 ### 6.4 Pre-Deployment Feasibility Assessment
 
@@ -441,39 +439,34 @@ The Jaccard collapse (1.000 → 0.136 under asymmetric vs. symmetric $M$) confir
 
 ## 8. Conclusion
 
-We presented AISO, a swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors. Our investigation makes three validated contributions.
+We presented AISO, a swarm optimizer with asymmetric bilinear compatibility $c_{ij} = W_i^\top M W_j \neq c_{ji}$ on simplex-valued type vectors. We report four contributions.
 
-**First, mechanism diagnostic with scope identification.** On CEC2013 F1–F8 (30 seeds), systematic ablation of 15+ candidate enhancements confirms that (1) asymmetric $M$ is the structural prerequisite for diversity persistence — symmetrizing $M$ collapses all agents to identical solutions (Jaccard 1.000); (2) phased local refinement is the sole productive complement (+0.466 average peak ratio); and (3) in continuous niching, the asymmetric mechanism is statistically indistinguishable from a random global phase ($p = 0.43$), establishing that its value is domain-specific to discrete selection. This is scope identification, not a failure.
+**First, the AISO algorithm.** Asymmetric bilinear compatibility on simplex-valued type vectors, with type assimilation as the update rule, adaptive repulsion as the diversity maintenance mechanism, and a phased global–local schedule. The key design decision is that $M$ need not be symmetric — directed affinities between agent types are the structural source of persistent sub-population diversity.
 
-**Second, application on fraud detection.** On Elliptic Bitcoin, the two-stage pipeline achieves PR-AUC 0.6644 (highest among 18 compared methods, 5 seeds), recovering 93.2% of full-graph performance under a constrained label budget, confirmed by the asymmetry ablation (Jaccard 1.000 → 0.136, PR-AUC 0.5527 → 0.6644) and monotone 2×2 stage decomposition. Formal significance of the margin over mRMR→SGD (+0.030) is limited by seed count.
+**Second, component analysis with scope identification.** On CEC2013 F1–F8 (30 seeds), systematic ablation of 15+ candidate enhancements confirms that (1) asymmetric $M$ is the structural prerequisite for diversity persistence — symmetrizing $M$ collapses all agents to identical solutions (Jaccard 1.000); (2) phased local refinement is the sole productive complement (+0.466 average peak ratio); and (3) in continuous niching, the asymmetric mechanism is statistically indistinguishable from a random global phase ($p = 0.43$), establishing that its value is domain-specific to discrete selection. This is scope identification, not a failure.
 
-**Third, a preliminary governing condition.** $\mathrm{CV}(\mu)$ rank-orders three real datasets by outcome (Spearman $\rho = -1.0$, $n = 3$, observational); synthetic validation ($n = 135$, $p < 0.0001$) confirms AISO outperforms random broadly, but the directional relationship reverses in the synthetic setting, indicating the real-world threshold is mediated by GNN-environment factors and requires wider validation.
+**Third, application on fraud detection.** On Elliptic Bitcoin, the two-stage pipeline achieves PR-AUC 0.6644 (highest among 18 compared methods, 5 seeds), recovering 93.2% of full-graph performance under a constrained label budget, confirmed by the asymmetry ablation (Jaccard 1.000 → 0.136, PR-AUC 0.5527 → 0.6644) and monotone 2×2 stage decomposition. Formal significance of the margin over mRMR→SGD (+0.030) is limited by seed count.
 
-The unified message: asymmetric bilinear interaction is a structurally motivated diversity mechanism whose effective operating regime is established by controlled ablation, and whose transfer to structured selection problems is validated and conditionally bounded — enabling practitioners to assess applicability before deployment.
+**Fourth, a preliminary governing condition.** $\mathrm{CV}(\mu)$ rank-orders three real datasets by outcome (Spearman $\rho = -1.0$, $n = 3$, observational); synthetic validation ($n = 135$, $p < 0.0001$) confirms AISO outperforms random broadly, but the directional relationship reverses in the synthetic setting, indicating the real-world threshold is mediated by GNN-environment factors and requires wider validation.
+
+We presented AISO and characterized where its asymmetric mechanism is effective — discrete selection, where type and position are coupled — and where it is not (continuous niching, where type-spatial decoupling eliminates the benefit). The empirical heuristic ($\mathrm{CV}(\mu)$) provides a practical pre-deployment screen; broader validation across additional datasets remains the primary next step.
 
 ---
 
 ## References
 
 - Brits, R., Engelbrecht, A.P., & van den Bergh, F. (2007). Locating multiple optima using particle swarm optimization. *Applied Mathematics and Computation*, 189(2), 1859–1883.
-- Caldarelli, G., Capocci, A., & Servedio, V.D.P. (2007). Dynamical affinity in opinion dynamics modelling. arXiv:physics/0701204.
+- Bagnoli, F., Carletti, T., Fanelli, D., Guarino, A., & Guazzini, A. (2007). Dynamical affinity in opinion dynamics modeling. *Physical Review E*, 76, 066105.
 - Chiang, W.L., et al. (2019). Cluster-GCN: An efficient algorithm for training deep and large graph convolutional networks. *KDD 2019*.
 - Ding, C., & Peng, H. (2005). Minimum redundancy feature selection from microarray gene expression data. *JBCB*, 3(2), 185–205.
-- Dou, Y., et al. (2020). Enhancing graph neural network-based fraud detection via locally homophilous aggregation. *CIKM 2020*.
-- Engelbrecht, A.P. (2010). Heterogeneous Particle Swarm Optimization. *LNCS* 6234, 191–202.
+- Dou, Y., et al. (2020). Enhancing graph neural network-based fraud detectors against camouflaged fraudsters. *CIKM 2020*.
 - Kennedy, J., & Eberhart, R. (1995). Particle swarm optimization. *ICNN 1995*.
 - Li, X. (2004). Adaptively choosing neighbourhood bests using species in a particle swarm optimizer for multimodal function optimization. *GECCO*, 105–116.
 - Li, X. (2010). Niching without niching parameters: PSO using a ring topology. *IEEE TEVC*, 14(1), 150–169.
 - Li, X., Engelbrecht, A., & Epitropakis, M.G. (2013). Benchmark functions for CEC'2013 special session and competition on niching methods for multimodal function optimization. RMIT University Technical Report.
 - Liu, Y., et al. (2021). Pick and choose: A GNN-based imbalanced learning approach for fraud detection. *WWW 2021*.
-- Liu, Z., et al. (2025). Game-theoretic asymmetric interaction in swarm robotics. *IEEE Robotics and Automation Letters*.
 - Qu, B.Y., Suganthan, P.N., & Das, S. (2013). A distance-based locally informed particle swarm model for multimodal optimization. *IEEE TEVC*, 17(3), 387–402.
-- Riget, J., & Vesterstrøm, J.S. (2002). A diversity-guided particle swarm optimizer — the ARPSO. EVALife TR 2002-02.
-- Schlichtkrull, M., et al. (2018). Modeling relational data with graph convolutional networks. *ESWC 2018*.
-- Shen, D., & Li, Y. (2012). A role-based particle swarm optimization for multimodal optimization. *ICCIS 2012*.
-- Silva, A., Neves, A., & Costa, E. (2002). Chasing the swarm: A predator-prey approach to function optimization. *MENDEL*.
 - Thomsen, R. (2004). Multimodal optimization using crowding-based differential evolution. *CEC 2004*.
-- Wu, F., et al. (2019). Simplifying graph convolutional networks. *ICML 2019*.
 - Zeng, H., et al. (2020). GraphSAINT: Graph sampling based inductive learning method. *ICLR 2020*.
 - Moscato, P. (1989). On evolution, search, optimization, genetic algorithms and martial arts: Towards memetic algorithms. Caltech Concurrent Computation Program, C3P Report 826.
 - Molina, D., Lozano, M., García-Martínez, C., & Herrera, F. (2010). Memetic algorithms for continuous optimisation based on local search chains. *Evolutionary Computation*, 18(1), 27–63.
